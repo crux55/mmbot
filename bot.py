@@ -1,59 +1,63 @@
-import discord
-from discord_slash import SlashCommand, SlashContext
-from discord_slash.utils.manage_commands import create_option, create_choice
-from discord_slash.model import ButtonStyle
-from discord_slash.utils.manage_components import create_actionrow, create_button
+import asyncio
+from datetime import datetime, timedelta
 
-intents = discord.Intents.default()
-intents.messages = True
-intents.guilds = True
-client = discord.Client(intents=intents)
-slash = SlashCommand(client, sync_commands=True)
+# Store scheduled events in a dictionary
+# Key: event start time, Value: event details
+scheduled_events = {}
 
-guild_ids = ['YYY']
+@client.slash_command(
+    name="scheduleevent",
+    description="Schedule a new event",
+    options=[
+        create_option(
+            name="title",
+            description="Title of the event",
+            option_type=3,
+            required=True
+        ),
+        create_option(
+            name="description",
+            description="Description of the event",
+            option_type=3,
+            required=True
+        ),
+        create_option(
+            name="start_time",
+            description="Start time of the event (YYYY-MM-DD HH:MM format)",
+            option_type=3,
+            required=True
+        )
+    ], guild_ids=guild_ids)
+async def scheduleevent(ctx: SlashContext, title: str, description: str, start_time: str):
+    # Parse the start time
+    start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M")
 
-@slash.slash(name="createevent",
-             description="Create a new event",
-             options=[
-               create_option(
-                 name="title",
-                 description="Title of the event",
-                 option_type=3,
-                 required=True
-               ),
-               create_option(
-                 name="description",
-                 description="Description of the event",
-                 option_type=3,
-                 required=True
-               )
-             ], guild_ids=guild_ids)
-async def createevent(ctx: SlashContext, title: str, description: str):
-    # Get the user who created the event
-    event_creator = ctx.author
+    # Store the event details
+    scheduled_events[start_time] = {
+        "title": title,
+        "description": description,
+        "creator": ctx.author.id
+    }
 
-    # Send event details to mod channel for approval
-    mod_channel = client.get_channel('mod-channel-id')  # Replace with your mod channel id
-    button_row = create_actionrow(
-        create_button(style=ButtonStyle.green, label="Approve", custom_id=f"approve:{title}:{description}:{event_creator.id}"),
-        create_button(style=ButtonStyle.red, label="Reject", custom_id="reject")
-    )
-    await mod_channel.send(f"New event:\n**{title}**\n{description}\nCreated by: {event_creator.mention}", components=[button_row])
-    await ctx.send(content='Event submitted for approval.', hidden=True)
+    await ctx.send(content='Event scheduled.', hidden=True)
 
-@client.event
-async def on_component(ctx: SlashContext):
-    if ctx.custom_id.startswith('approve:'):
-        # Get event details from custom_id
-        _, title, description, creator_id = ctx.custom_id.split(':')
+async def check_scheduled_events():
+    while True:
+        now = datetime.now()
+        for start_time, event in list(scheduled_events.items()):
+            if now >= start_time:
+                # The event should start now
+                forum_channel = client.get_channel('1216346127289421825')  # Replace with your forum channel id
+                thread = await forum_channel.create_thread(name=event["title"])
+                await thread.send(f"**{event['title']}**\n{event['description']}\nCreated by: <@{event['creator']}>")
 
-        # Create thread for event
-        forum_channel = client.get_channel('forum-channel-id')  # Replace with your forum channel id
-        thread = await forum_channel.create_thread(name=title)
-        await thread.send(f"**{title}**\n{description}\nCreated by: <@{creator_id}>")
+                # Remove the event from the dictionary
+                del scheduled_events[start_time]
 
-        await ctx.send(content='Event approved and thread created.', hidden=True)
-    elif ctx.custom_id == 'reject':
-        await ctx.send(content='Event rejected.', hidden=True)
+        # Wait for a minute before checking again
+        await asyncio.sleep(60)
+
+# Start the task that checks for scheduled events
+client.loop.create_task(check_scheduled_events())
 
 client.run('your-bot-token')  # Replace with your bot token
