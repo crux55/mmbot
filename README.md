@@ -34,7 +34,7 @@ python bot.py
 
 - `/create_event "event name" "event description" "dd/mm/yyyy HH:mm" "dd/mm/yyyy HH:mm" "location"`: Create a new event. This command takes five parameters: name, description, start time, end time, and location.
 
-- `quotethat`: Quotes a replied-to message in the quote channel. The bot adds reactions to each quote.
+- `/quotethat`: Quotes a replied-to message in the quote channel. The bot adds reactions to each quote.
 
 
 ## Event Approval
