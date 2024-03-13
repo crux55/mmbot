@@ -25,13 +25,17 @@ BOT_TOKEN=your_bot_token
 python bot.py
 ```
 
-Commands
-/modsay #channel "Your message here": Send a message as the bot to a specific channel. You must have the "Moderator" role to use this command.
 
-/create_event "event name" "event description" "dd/mm/yyyy HH:mm" "dd/mm/yyyy HH:mm" "location": Create a new event. This command takes five parameters: name, description, start time, end time, and location.
+## Commands
 
-Event Approval
+- `/modsay #channel "Your message here"`: Send a message as the bot to a specific channel. You must have the "Moderator" role to use this command.
+
+- `/create_event "event name" "event description" "dd/mm/yyyy HH:mm" "dd/mm/yyyy HH:mm" "location"`: Create a new event. This command takes five parameters: name, description, start time, end time, and location.
+
+## Event Approval
+
 When a user creates an event, the bot sends an approval request to the moderators. The moderators can then approve or reject the event. If the event is approved, the bot creates a thread for the event and a scheduled event.
 
-Error Handling
+## Error Handling
+
 The bot logs informational and error messages to a file named bot.log. If an error occurs, the bot sends a notification to the bot channel.
