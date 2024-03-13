@@ -274,7 +274,7 @@ async def modsay(ctx, channel: discord.TextChannel = None, *, message = None):
         await ctx.send("You do not have permission to use this command.")
 
 @bot.command()
-async def create_event(ctx, name=None, description=None, start_time=None, end_time=None, location=None):
+async def createevent(ctx, name=None, description=None, start_time=None, end_time=None, location=None):
     """
     Create a new event.
 
@@ -308,7 +308,7 @@ async def create_event(ctx, name=None, description=None, start_time=None, end_ti
 
     # If any parameters are missing, send an error message and return
     if error_message:
-        error_message += 'The order of the params is name, description, start time, end time, location.\nExample: /create_event "event name" "event description" "dd/mm/yyyy HH:mm" "dd/mm/yyyy HH:mm" "location"'
+        error_message += 'The order of the params is name, description, start time, end time, location.\nExample: /createevent "event name" "event description" "dd/mm/yyyy HH:mm" "dd/mm/yyyy HH:mm" "location"'
         await ctx.send(error_message)
         return
 
@@ -402,6 +402,36 @@ async def quotethat(ctx):
         except discord.Forbidden:
             await ctx.send("The bot does not have the required permissions to add reactions.")
             return
+
+@bot.command()
+async def my_meetups(ctx):
+    """
+    List the meetups the user has joined.
+
+    This command sends a message listing the IDs of the meetups the user has joined.
+
+    Args:
+        ctx (discord.ext.commands.Context): The context in which the command was called.
+    """
+    await ctx.message.delete()
+    user_id = ctx.author.id
+    guild = ctx.guild
+
+    # Fetch all scheduled events from the guild
+    scheduled_events = await guild.fetch_scheduled_events()
+
+    # Check each event to see if the user is in the list of users
+    user_events = []
+    for event in scheduled_events:
+        users = event.users
+        if any(user.id == user_id for user in users):
+            user_events.append(event)
+
+    if not user_events:
+        await ctx.send("You have not joined any meetups.")
+    else:
+        event_names = [event.name for event in user_events]
+        await ctx.send(f"You have joined the following meetups: {', '.join(event_names)}")
 
 @bot.event
 async def on_reaction_add(reaction, user):

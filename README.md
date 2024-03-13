@@ -32,10 +32,11 @@ python bot.py
 
 - `/modsay #channel "Your message here"`: Send a message as the bot to a specific channel. You must have the "Moderator" role to use this command.
 
-- `/create_event "event name" "event description" "dd/mm/yyyy HH:mm" "dd/mm/yyyy HH:mm" "location"`: Create a new event. This command takes five parameters: name, description, start time, end time, and location.
+- `/createevent "event name" "event description" "dd/mm/yyyy HH:mm" "dd/mm/yyyy HH:mm" "location"`: Create a new event. This command takes five parameters: name, description, start time, end time, and location.
 
-- `quotethat`: Quotes a replied-to message in the quote channel. The bot adds reactions to each quote.
+- `/quotethat`: Quotes a replied-to message in the quote channel. The bot adds reactions to each quote.
 
+- `/mymeetups`: List all the meetups you've marked yourself as interested in
 
 ## Event Approval
 
