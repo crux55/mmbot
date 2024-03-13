@@ -289,6 +289,9 @@ async def create_event(ctx, name=None, description=None, start_time=None, end_ti
         end_time (str): The end time of the event, in the format 'dd/mm/yyyy HH:mm'.
         location (str): The location of the event.
     """
+    # Delete the invoking message
+    await ctx.message.delete()
+    
     # Check that all parameters are provided
     error_message = ""
     if name is None:
