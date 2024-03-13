@@ -12,11 +12,11 @@ import os
 load_dotenv()
 
 # Get the variables
-GUILD_ID = os.getenv('GUILD_ID')
-FORUM_CHANNEL_ID = os.getenv('FORUM_CHANNEL_ID')
-ADMIN_CHANNEL_ID = os.getenv('ADMIN_CHANNEL_ID')
-CHEESECAKE_USER_ID = os.getenv('CHEESECAKE_USER_ID')
-BOT_CHANNEL_ID = os.getenv('BOT_CHANNEL_ID')
+GUILD_ID = int(os.getenv('GUILD_ID'))
+FORUM_CHANNEL_ID = int(os.getenv('FORUM_CHANNEL_ID'))
+ADMIN_CHANNEL_ID = int(os.getenv('ADMIN_CHANNEL_ID'))
+CHEESECAKE_USER_ID = int(os.getenv('CHEESECAKE_USER_ID'))
+BOT_CHANNEL_ID = int(os.getenv('BOT_CHANNEL_ID'))
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 # File names
@@ -61,17 +61,17 @@ def log_info(message):
     """
     logger.info(message)
 
-def log_error(message):
+async def log_error(message):
     """
     Log an error message and send a notification to the bot channel.
 
     Args:
         message (str): The message to log.
     """
-    bot.get_channel(BOT_CHANNEL_ID).send(f"User <@{CHEESECAKE_USER_ID}> there's been an error: {message}")
+    await bot.get_channel(BOT_CHANNEL_ID).send(f"User <@{CHEESECAKE_USER_ID}> there's been an error: {message}")
     logger.error(message)
 
-def add_to_events(event):
+async def add_to_events(event):
     """
     Add an event to the EVENTS list and save the list to disk.
 
@@ -79,16 +79,16 @@ def add_to_events(event):
         event (Event): The event to add.
     """
     EVENTS.append(event)
-    save_events_to_disk(EVENTS)
+    await save_events_to_disk(EVENTS)
 
-def load_events():
+async def load_events():
     """
     Load the EVENTS list from disk.
     """
     global EVENTS
-    EVENTS = load_events_from_disk()
+    EVENTS = await load_events_from_disk()
 
-def save_events_to_disk(events):
+async def save_events_to_disk(events):
     """
     Save a list of events to disk.
 
@@ -100,9 +100,9 @@ def save_events_to_disk(events):
             pickle.dump(events, f)
     except (pickle.PicklingError, OSError) as e:
         #TODO: dump to text file
-        log_error(f"Error saving events to disk: {e}")
+        await log_error(f"Error saving events to disk: {e}")
 
-def load_events_from_disk():
+async def load_events_from_disk():
     """
     Load a list of events from disk.
 
@@ -115,7 +115,7 @@ def load_events_from_disk():
     except FileNotFoundError:
         return []
     except (pickle.UnpicklingError, OSError) as e:
-        log_error(f"Error loading events from disk: {e}")
+        await log_error(f"Error loading events from disk: {e}")
         return []
 
 def convert_string_to_dt(dt_string):
@@ -150,12 +150,12 @@ class Event:
     start_time: str
     end_time: str
     location: str
-    op_id: str
+    op_id: int
     op_name: str
+    original_channel_id: int
     event_id: str = ""
     event_forum_url: str = ""
     event_forum_id: str = ""
-    original_channel_id: str = ""
 
 class Event_Approval_Message(discord.ui.View):
     """A view for approving events."""
@@ -188,7 +188,7 @@ class Event_Approval_Message(discord.ui.View):
             user = interaction.user
 
             # Edit the interaction message to show that the event was approved
-            custom_id = f"The event {self.event.name} was approved by {user.global_name}"
+            custom_id = f"The event \"{self.event.name}\" was approved by <@{user.id}>"
             await interaction.message.edit(content=custom_id, view=None)
             self.stop()
 
@@ -208,7 +208,7 @@ class Event_Approval_Message(discord.ui.View):
                 start_time=self.event.start_time,
                 location=self.event.location,
                 end_time=self.event.end_time,
-                description=f"{self.event.description} \n Checkout out the discussion thread [here]({created_thread.jump_url})!\n Point for contact for this event is <@{self.event.op_name}>.",
+                description=f"{self.event.description} \n Checkout out the discussion thread [here]({created_thread.jump_url})!\n Point for contact for this event is <@{self.event.op_id}>.",
                 entity_type=discord.EntityType.external,
                 privacy_level=discord.PrivacyLevel.guild_only
             )
@@ -217,9 +217,9 @@ class Event_Approval_Message(discord.ui.View):
             self.event.event_id = event.id
 
             # Add the event to the EVENTS list
-            add_to_events(self.event)
+            await add_to_events(self.event)
         except Exception as e:
-            log_error(f"Error in button_callback: {e}")
+            await log_error(f"Error in button_callback: {e}")
 
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red, custom_id="reject")
@@ -238,14 +238,15 @@ class Event_Approval_Message(discord.ui.View):
             user = interaction.user
 
             # Edit the interaction message to show that the event was rejected
-            custom_id = f"The event {self.event.name} was rejected by {user.name}"
+            custom_id = f"The event \"{self.event.name}\" was rejected by <@{user.id}>"
             await interaction.message.edit(content=custom_id, view=None)
 
             # Stop the view
             self.stop()
-            bot.get_channel(self.event.original_channel_id).send(f"Event {self.event.name} was rejected."
+            
+            await bot.get_channel(self.event.original_channel_id).send(f"<@{self.event.op_id}> The event \"{self.event.name}\" was rejected.")
         except Exception as e:
-            log_error(f"Error in on_reject: {e}")
+            await log_error(f"Error in on_reject: {e}")
 
 @bot.command()
 async def modsay(ctx, channel: discord.TextChannel = None, *, message = None):
@@ -319,8 +320,8 @@ async def create_event(ctx, name=None, description=None, start_time=None, end_ti
     event = Event(uuid.uuid4(), name, description, start_time, end_time, location, ctx.author.id, ctx.author.name, ctx.channel.id)
 
     # Send an approval request
-    await ctx.send(
-        f"Event {event.name} approval request. This event was created by @<{ctx.author.id}> and is scheduled to start at {event.start_time} and end at {event.end_time} at {event.location}.\n It's described as {event.description}.\n Please approve or reject this event.",
+    await bot.get_channel(ADMIN_CHANNEL_ID).send(
+        f"Event \"{event.name}\" approval request. This event was created by <@{ctx.author.id}>.\nStart time: {event.start_time}\nEnd time: {event.end_time}\nLocation: {event.location}.\nDescription: {event.description}.\n Please approve or reject this event.",
         view=Event_Approval_Message(event),
     )
 
@@ -338,9 +339,7 @@ async def on_scheduled_event_user_add(event, user):
     try:
         for _event in EVENTS:
             # Get the users in the event
-            users = []
-            async for user in bot.get_guild(GUILD_ID).get_scheduled_event(event.id).users():
-                users.append(user)
+            users = await bot.get_guild(GUILD_ID).get_scheduled_event(event.id).fetch_users()
 
             # Check if the user is already in the event
             user_in_users = user.id in [u.id for u in users]
@@ -349,12 +348,12 @@ async def on_scheduled_event_user_add(event, user):
             if _event.event_id == event.id and not user_in_users:
                 await bot.get_channel(_event.event_forum_id).send(f"User <@{user.id}> has joined the event {_event.name} at {_event.start_time} at {_event.location}.")
     except Exception as e:
-        log_error(f"Error in on_scheduled_event_user_add: {e}")
+        await log_error(f"Error in on_scheduled_event_user_add: {e}")
 
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
-    EVENTS = load_events()
+    EVENTS = await load_events()
     print("Ready!")
 
 # Run the bot with your token
