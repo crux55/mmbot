@@ -338,15 +338,9 @@ async def on_scheduled_event_user_add(event, user):
     """
     try:
         for _event in EVENTS:
-            # Get the users in the event
-            users = await bot.get_guild(GUILD_ID).get_scheduled_event(event.id).fetch_users()
-
-            # Check if the user is already in the event
-            user_in_users = user.id in [u.id for u in users]
-
             # If the user is not in the event, send a message to the event's forum channel
-            if _event.event_id == event.id and not user_in_users:
-                await bot.get_channel(_event.event_forum_id).send(f"User <@{user.id}> has joined the event {_event.name} at {_event.start_time} at {_event.location}.")
+            if _event.event_id == event.id:
+                await bot.get_channel(_event.event_forum_id).send(f"User <@{user.id}> has joined the event.")
     except Exception as e:
         await log_error(f"Error in on_scheduled_event_user_add: {e}")
 
