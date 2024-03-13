@@ -12,12 +12,14 @@ pip install -r requirements.txt
 
 2. Create a .env file in the same directory as your script, and add your variables to it:
 
+```
 GUILD_ID=your_guild_id
 FORUM_CHANNEL_ID=your_forum_channel_id
 ADMIN_CHANNEL_ID=your_admin_channel_id
 CHEESECAKE_USER_ID=your_cheesecake_user_id
 BOT_CHANNEL_ID=your_bot_channel_id
 BOT_TOKEN=your_bot_token
+```
 
 3. Run the bot
 
