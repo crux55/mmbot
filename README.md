@@ -34,6 +34,9 @@ python bot.py
 
 - `/create_event "event name" "event description" "dd/mm/yyyy HH:mm" "dd/mm/yyyy HH:mm" "location"`: Create a new event. This command takes five parameters: name, description, start time, end time, and location.
 
+- `quotethat`: Quotes a replied-to message in the quote channel. The bot adds reactions to each quote.
+
+
 ## Event Approval
 
 When a user creates an event, the bot sends an approval request to the moderators. The moderators can then approve or reject the event. If the event is approved, the bot creates a thread for the event and a scheduled event.
@@ -41,3 +44,9 @@ When a user creates an event, the bot sends an approval request to the moderator
 ## Error Handling
 
 The bot logs informational and error messages to a file named bot.log. If an error occurs, the bot sends a notification to the bot channel.
+
+## Reacting to Quotes
+
+The bot also has a feature to celebrate when a quote reaches a certain number of thumbs up reactions.
+
+When a quote in the quote channel gets 10 thumbs up reactions, the bot sends a message to the channel celebrating this achievement.

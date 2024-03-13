@@ -17,6 +17,7 @@ FORUM_CHANNEL_ID = int(os.getenv('FORUM_CHANNEL_ID'))
 ADMIN_CHANNEL_ID = int(os.getenv('ADMIN_CHANNEL_ID'))
 CHEESECAKE_USER_ID = int(os.getenv('CHEESECAKE_USER_ID'))
 BOT_CHANNEL_ID = int(os.getenv('BOT_CHANNEL_ID'))
+QUOTE_CHANNEL_ID = int(os.getenv('QUOTE_CHANNEL_ID'))
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 # File names
@@ -291,7 +292,7 @@ async def create_event(ctx, name=None, description=None, start_time=None, end_ti
     """
     # Delete the invoking message
     await ctx.message.delete()
-    
+
     # Check that all parameters are provided
     error_message = ""
     if name is None:
@@ -346,6 +347,67 @@ async def on_scheduled_event_user_add(event, user):
                 await bot.get_channel(_event.event_forum_id).send(f"User <@{user.id}> has joined the event.")
     except Exception as e:
         await log_error(f"Error in on_scheduled_event_user_add: {e}")
+
+@bot.command()
+async def quotethat(ctx):
+    """
+    Quote a message in the quote channel.
+
+    This command deletes the invoking message, fetches the referenced message, and sends it as a quote in the quote channel.
+    If the quote already exists in the quote channel, it sends an error message and does not send the quote.
+    If the quote does not exist in the quote channel, it sends the quote and adds reactions to it.
+
+    Args:
+        ctx (discord.ext.commands.Context): The context in which the command was called.
+    """
+    try:
+        await ctx.message.delete()
+        message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+    except discord.NotFound:
+        await ctx.send("The referenced message could not be found.")
+        return
+    except discord.Forbidden:
+        await ctx.send("The bot does not have the required permissions to delete messages or fetch message history.")
+        return
+
+    quote = f"{message.content} - <@{message.author.id}>"
+
+    # Check for duplicate quotes
+    quote_channel = bot.get_channel(QUOTE_CHANNEL_ID)
+    try:
+        async for old_message in quote_channel.history(limit=200):  # Adjust the limit as needed
+            if old_message.content == quote:
+                await ctx.send("This quote already exists in the quote channel.")
+                return
+    except discord.Forbidden:
+        await ctx.send("The bot does not have the required permissions to fetch message history.")
+        return
+
+    # Send the quote and add reactions
+    try:
+        quote_message = await quote_channel.send(quote)
+    except discord.Forbidden:
+        await ctx.send("The bot does not have the required permissions to send messages.")
+        return
+
+    keklaugh_emoji = discord.utils.get(ctx.guild.emojis, name='keklaugh')
+
+    if keklaugh_emoji is None:
+        await ctx.send("Couldn't find a custom emoji with the name 'keklaugh'. Tell <@{CHEESECAKE_USER_ID}> to add it to the server or check the code.")
+    else:
+        reactions = ["👍", "👎", "😄", "😢", "❤️", keklaugh_emoji]
+    for reaction in reactions:
+        try:
+            await quote_message.add_reaction(reaction)
+        except discord.Forbidden:
+            await ctx.send("The bot does not have the required permissions to add reactions.")
+            return
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    if reaction.message.channel.id == QUOTE_CHANNEL_ID and reaction.emoji == "👍":
+        if reaction.count == 10:
+            await reaction.message.channel.send(f"🎉 This quote has reached 10 thumbs up! 🎉")
 
 @bot.event
 async def on_ready():
