@@ -404,7 +404,7 @@ async def quotethat(ctx):
             return
 
 @bot.command()
-async def my_meetups(ctx):
+async def mymeetups(ctx):
     """
     List the meetups the user has joined.
 
