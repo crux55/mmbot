@@ -129,23 +129,18 @@ def convert_string_to_dt(dt_string):
         dt_string (str): The date and time string to convert.
 
     Returns:
-        datetime.datetime: The converted datetime object, or None if the conversion failed.
+        datetime.datetime: The converted datetime object
     """
-    try:
-        # Get the current local timezone
-        local_tz = datetime.datetime.now().astimezone().tzinfo
+    # Get the current local timezone
+    local_tz = datetime.datetime.now().astimezone().tzinfo
 
-        # Convert the string to a "naive" datetime object (without timezone info)
-        naive_dt = datetime.datetime.strptime(dt_string, '%d/%m/%Y %H:%M')
+    # Convert the string to a "naive" datetime object (without timezone info)
+    naive_dt = datetime.datetime.strptime(dt_string, '%d/%m/%Y %H:%M')
 
-        # Make the datetime object "aware" by adding the local timezone info
-        aware_dt = naive_dt.replace(tzinfo=local_tz)
+    # Make the datetime object "aware" by adding the local timezone info
+    aware_dt = naive_dt.replace(tzinfo=local_tz)
 
-        return aware_dt
-    except ValueError as e:
-        #TODO
-        print(f"Error in convert_string_to_dt: {e}")
-        return None
+    return aware_dt
 
 @dataclasses.dataclass
 class Event:
@@ -160,6 +155,7 @@ class Event:
     event_id: str = ""
     event_forum_url: str = ""
     event_forum_id: str = ""
+    original_channel_id: str = ""
 
 class Event_Approval_Message(discord.ui.View):
     """A view for approving events."""
@@ -247,8 +243,9 @@ class Event_Approval_Message(discord.ui.View):
 
             # Stop the view
             self.stop()
+            bot.get_channel(self.event.original_channel_id).send(f"Event {self.event.name} was rejected."
         except Exception as e:
-            print(f"Error in on_reject: {e}")
+            log_error(f"Error in on_reject: {e}")
 
 @bot.command()
 async def modsay(ctx, channel: discord.TextChannel = None, *, message = None):
@@ -319,7 +316,7 @@ async def create_event(ctx, name=None, description=None, start_time=None, end_ti
         return
 
     # Create a new Event object
-    event = Event(uuid.uuid4(), name, description, start_time, end_time, location, ctx.author.id, ctx.author.name)
+    event = Event(uuid.uuid4(), name, description, start_time, end_time, location, ctx.author.id, ctx.author.name, ctx.channel.id)
 
     # Send an approval request
     await ctx.send(
