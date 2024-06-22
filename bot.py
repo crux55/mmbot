@@ -5,8 +5,11 @@ import discord
 from discord.ext import commands
 import pickle
 import logging
+from enum import Enum
 from dotenv import load_dotenv
 import os
+import mysql.connector
+from mysql.connector import Error
 
 # Load the .env file
 load_dotenv()
@@ -53,6 +56,26 @@ handler.setFormatter(formatter)
 # Add the handlers to the logger
 logger.addHandler(handler)
 
+@dataclasses.dataclass
+class Event:
+    uuid: str
+    name: str
+    description: str
+    start_time: str
+    end_time: str
+    location: str
+    op_id: int
+    op_name: str
+    original_channel_id: int
+    event_id: str = ""
+    event_forum_url: str = ""
+    event_forum_id: str = ""
+
+class STATUS(Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
 def log_info(message):
     """
     Log an informational message.
@@ -80,7 +103,7 @@ async def add_to_events(event):
         event (Event): The event to add.
     """
     EVENTS.append(event)
-    await save_events_to_disk(EVENTS)
+    await save_event(event)
 
 async def load_events():
     """
@@ -89,19 +112,42 @@ async def load_events():
     global EVENTS
     EVENTS = await load_events_from_disk()
 
-async def save_events_to_disk(events):
-    """
-    Save a list of events to disk.
-
-    Args:
-        events (list): The list of events to save.
-    """
+def save_event(event: Event):
     try:
-        with open(EVENTS_FILE_NAME, 'wb') as f:
-            pickle.dump(events, f)
-    except (pickle.PicklingError, OSError) as e:
-        #TODO: dump to text file
-        await log_error(f"Error saving events to disk: {e}")
+        # Replace with your MySQL database credentials
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="your_username",
+            password="your_password",
+            database="your_database"
+        )
+
+        cursor = connection.cursor()
+
+        # Prepare the SQL query
+        insert_query = """
+            INSERT INTO events (uuid, name, description, start_time, end_time, location, op_id, op_name, original_channel_id, event_id, event_forum_url, event_forum_id, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+
+        # Execute the query with the event data
+        cursor.execute(insert_query, (
+            event.uuid, event.name, event.description, event.start_time,
+            event.end_time, event.location, event.op_id, event.op_name,
+            event.original_channel_id, event.event_id, event.event_forum_url,
+            event.event_forum_id, STATUS.PENDING
+        ))
+
+        connection.commit()
+        log_info("Event saved successfully! {}".format(event.name))
+
+    except Error as e:
+        print(f"Error: {e}")
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
 async def load_events_from_disk():
     """
@@ -142,21 +188,6 @@ def convert_string_to_dt(dt_string):
     aware_dt = naive_dt.replace(tzinfo=local_tz)
 
     return aware_dt
-
-@dataclasses.dataclass
-class Event:
-    uuid: str
-    name: str
-    description: str
-    start_time: str
-    end_time: str
-    location: str
-    op_id: int
-    op_name: str
-    original_channel_id: int
-    event_id: str = ""
-    event_forum_url: str = ""
-    event_forum_id: str = ""
 
 class Event_Approval_Message(discord.ui.View):
     """A view for approving events."""
