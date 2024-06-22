@@ -282,13 +282,13 @@ def convert_string_to_dt(dt_string):
         dt_string (str): The date and time string to convert.
 
     Returns:
-        datetime.datetime: The converted datetime object
+        datetime: The converted datetime object
     """
     # Get the current local timezone
-    local_tz = datetime.datetime.now().astimezone().tzinfo
+    local_tz = datetime.now().astimezone().tzinfo
 
     # Convert the string to a "naive" datetime object (without timezone info)
-    naive_dt = datetime.datetime.strptime(dt_string, '%d/%m/%Y %H:%M')
+    naive_dt = datetime.strptime(dt_string, '%d/%m/%Y %H:%M')
 
     # Make the datetime object "aware" by adding the local timezone info
     aware_dt = naive_dt.replace(tzinfo=local_tz)
