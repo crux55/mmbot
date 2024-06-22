@@ -239,13 +239,13 @@ class Event_Approval_Message(discord.ui.View):
             user = interaction.user
 
             # Edit the interaction message to show that the event was rejected
-            custom_id = f"The event \"{self.event.name}\" was rejected by <@{user.id}>"
+            custom_id = f"The event \"{self.event.name}\" was rejected. If you could like to know more, please open a ticket via Community support"
             await interaction.message.edit(content=custom_id, view=None)
 
             # Stop the view
             self.stop()
             
-            await bot.get_channel(self.event.original_channel_id).send(f"<@{self.event.op_id}> The event \"{self.event.name}\" was rejected.")
+            await bot.get_channel(BOT_CHANNEL_ID).send(f"<@{self.event.op_id}> The event \"{self.event.name}\" was rejected.")
         except Exception as e:
             await log_error(f"Error in on_reject: {e}")
 
@@ -269,9 +269,9 @@ async def modsay(ctx, channel: discord.TextChannel = None, *, message = None):
         if channel and message:
             await bot.get_channel(channel.id).send(message)
         else:
-            await ctx.send('Missing parameters. Usage: /modsay #channel "Your message here"')
+            await ctx.send('Missing parameters. Usage: /modsay #channel "Your message here"', ephemeral=True)
     else:
-        await ctx.send("You do not have permission to use this command.")
+        await ctx.send("You do not have permission to use this command.", ephemeral=True)
 
 @bot.command()
 async def createevent(ctx, name=None, description=None, start_time=None, end_time=None, location=None):
@@ -309,7 +309,7 @@ async def createevent(ctx, name=None, description=None, start_time=None, end_tim
     # If any parameters are missing, send an error message and return
     if error_message:
         error_message += 'The order of the params is name, description, start time, end time, location.\nExample: /createevent "event name" "event description" "dd/mm/yyyy HH:mm" "dd/mm/yyyy HH:mm" "location"'
-        await ctx.send(error_message)
+        await ctx.send(error_message, ephemeral=True)
         return
 
     # Convert the start and end times to datetime objects
@@ -317,7 +317,7 @@ async def createevent(ctx, name=None, description=None, start_time=None, end_tim
         start_time = convert_string_to_dt(start_time)
         end_time = convert_string_to_dt(end_time)
     except ValueError as e:
-        await ctx.send(f"At least one of the date strings you gave contains an issue: {str(e)}")
+        await ctx.send(f"At least one of the date strings you gave contains an issue: {str(e)}", ephemeral=True)
         return
 
     # Create a new Event object
@@ -328,6 +328,8 @@ async def createevent(ctx, name=None, description=None, start_time=None, end_tim
         f"Event \"{event.name}\" approval request. This event was created by <@{ctx.author.id}>.\nStart time: {event.start_time}\nEnd time: {event.end_time}\nLocation: {event.location}.\nDescription: {event.description}.\n Please approve or reject this event.",
         view=Event_Approval_Message(event),
     )
+
+    await ctx.send("Your event has been sent to the EC's for approval. Please be patient while they find time to review", ephemeral=True)
 
 @bot.event
 async def on_scheduled_event_user_add(event, user):
@@ -364,10 +366,11 @@ async def quotethat(ctx):
         await ctx.message.delete()
         message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
     except discord.NotFound:
-        await ctx.send("The referenced message could not be found.")
+        await ctx.send("The referenced message could not be found.", ephemeral=True)
         return
     except discord.Forbidden:
-        await ctx.send("The bot does not have the required permissions to delete messages or fetch message history.")
+        log_error("The bot could not find permissions to find quote")
+        await ctx.send("The bot does not have the required permissions to delete messages or fetch message history.", ephemeral=True)
         return
 
     quote = f"{message.content} - <@{message.author.id}>"
@@ -377,30 +380,34 @@ async def quotethat(ctx):
     try:
         async for old_message in quote_channel.history(limit=200):  # Adjust the limit as needed
             if old_message.content == quote:
-                await ctx.send("This quote already exists in the quote channel.")
+                await ctx.send("This quote already exists in the quote channel.", ephemeral=True)
                 return
     except discord.Forbidden:
-        await ctx.send("The bot does not have the required permissions to fetch message history.")
+        log_error("The bot could not find permissions to get quote channel")
+        await ctx.send("The bot does not have the required permissions to fetch message history.", ephemeral=True)
         return
 
     # Send the quote and add reactions
     try:
         quote_message = await quote_channel.send(quote)
     except discord.Forbidden:
-        await ctx.send("The bot does not have the required permissions to send messages.")
+        log_error("The bot could not find permissions to post quote")
+        await ctx.send("The bot does not have the required permissions to send messages.", ephemeral=True)
         return
 
     keklaugh_emoji = discord.utils.get(ctx.guild.emojis, name='keklaugh')
 
     if keklaugh_emoji is None:
-        await ctx.send("Couldn't find a custom emoji with the name 'keklaugh'. Tell <@{CHEESECAKE_USER_ID}> to add it to the server or check the code.")
+        await ctx.send("Couldn't find a custom emoji with the name 'keklaugh'. Tell <@{CHEESECAKE_USER_ID}> to add it to the server or check the code.", ephemeral=True)
+        log_error("The emjoi {} could not be found".format(keklaugh_emoji))
     else:
         reactions = ["👍", "👎", "😄", "😢", "❤️", keklaugh_emoji]
     for reaction in reactions:
         try:
             await quote_message.add_reaction(reaction)
         except discord.Forbidden:
-            await ctx.send("The bot does not have the required permissions to add reactions.")
+            log_error("The bot does not have the required permissions to add reactions.")
+            await ctx.send("The bot does not have the required permissions to add reactions.", ephemeral=True)
             return
 
 @bot.command()
@@ -428,10 +435,10 @@ async def mymeetups(ctx):
             user_events.append(event)
 
     if not user_events:
-        await ctx.send("You have not joined any meetups.")
+        await ctx.send("You have not joined any meetups.", ephemeral=True)
     else:
         event_names = [event.name for event in user_events]
-        await ctx.send(f"You have joined the following meetups: {', '.join(event_names)}")
+        await ctx.send(f"You have joined the following meetups: {', '.join(event_names)}", ephemeral=True)
 
 @bot.event
 async def on_reaction_add(reaction, user):
