@@ -439,7 +439,7 @@ async def hypeman(ctx):
 
     event = get_event_from_channel_id(channel_id)
     
-    if not len(event) == 0:
+    if event is None:
         await ctx.send("The hype didn't work. There was an error", ephemeral=True)
         log_error("More than one event found for channel. I've no idea how this could even happen")
         return    
