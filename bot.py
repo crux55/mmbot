@@ -234,7 +234,7 @@ def save_event(event: Event):
 
         # Execute the query with the event data
         cursor.execute(insert_query, (
-            event.uuid, event.name, event.description, event.start_time,
+            event.uuid.text, event.name, event.description, event.start_time,
             event.end_time, event.location, event.op_id, event.op_name,
             event.original_channel_id, event.event_id, event.event_forum_url,
             event.event_forum_id, STATUS.PENDING, False
