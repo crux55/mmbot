@@ -508,6 +508,8 @@ async def createevent(ctx, name=None, description=None, start_time=None, end_tim
     # Create a new Event object
     event = Event(uuid.uuid4(), name, description, start_time, end_time, location, ctx.author.id, ctx.author.name, ctx.channel.id)
 
+    save_event(event)
+
     # Send an approval request
     await bot.get_channel(ADMIN_CHANNEL_ID).send(
         f"Event \"{event.name}\" approval request. This event was created by <@{ctx.author.id}>.\nStart time: {event.start_time}\nEnd time: {event.end_time}\nLocation: {event.location}.\nDescription: {event.description}.\n Please approve or reject this event.",
