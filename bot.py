@@ -432,15 +432,16 @@ async def modsay(ctx, channel: discord.TextChannel = None, *, message = None):
 
 @bot.command()
 async def hypeman(ctx, message : str):
-    auth_id = ctx.author.id
-    auth_name = ctx.author.name
+    # Delete the invoking message
+    await ctx.message.delete()
+
     channel_id = ctx.channel.id
 
     event = get_event_from_channel_id(channel_id)
     
     if not len(event) == 0:
         await ctx.send("The hype didn't work. There was an error", ephemeral=True)
-        log_error("More than one event found for channel. 've no idea how this could even happen")
+        log_error("More than one event found for channel. I've no idea how this could even happen")
         return    
     
     # Get the current time
@@ -452,7 +453,7 @@ async def hypeman(ctx, message : str):
         if event.event_forum_id is channel_id:
             await bot.get_channel(ADMIN_CHANNEL_ID).send(
                 f"You can only call the hypeman once before an event. Are you sure you want to do this now?",
-                view=Hypeman_Approval_Message(event),
+                view=Hypeman_Approval_Message(channel_id),
             )
             
     else:
