@@ -106,10 +106,10 @@ def get_event_from_channel_id(channel_id: str):
     try:
         # Replace with your MySQL database credentials
         connection = mysql.connector.connect(
-            host="localhost",
-            user="your_username",
-            password="your_password",
-            database="your_database"
+            host=host,
+            user=user,
+            password=password,
+            database=database
         )
 
         cursor = connection.cursor()
