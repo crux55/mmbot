@@ -23,6 +23,6 @@ services:
       MYSQL_PASSWORD: your_password
       MYSQL_DATABASE: your_database
     volumes:
-      - bot.log:/app/bot.log
+      - ./bot.log:/app/bot.log
     depends_on:
       - db
