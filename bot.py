@@ -431,7 +431,7 @@ async def modsay(ctx, channel: discord.TextChannel = None, *, message = None):
         await ctx.send("You do not have permission to use this command.", ephemeral=True)
 
 @bot.command()
-async def hypeman(ctx, message : str):
+async def hypeman(ctx):
     # Delete the invoking message
     await ctx.message.delete()
 
