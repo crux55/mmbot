@@ -373,7 +373,7 @@ class Event_Approval_Message(discord.ui.View):
             self.event.event_id = event.id
 
             # Update the status to APPROVED
-            await update_event_status(str(self.event.uuid), STATUS.APPROVED)
+            update_event_status(str(self.event.uuid), STATUS.APPROVED)
         except Exception as e:
             await log_error(f"Error in button_callback: {e}")
 
@@ -402,7 +402,7 @@ class Event_Approval_Message(discord.ui.View):
             
             await bot.get_channel(BOT_CHANNEL_ID).send(f"<@{self.event.op_id}> The event \"{self.event.name}\" was rejected.")
             # Update the status to REJECTED
-            await update_event_status(str(self.event.uuid), STATUS.REJECTED)
+            update_event_status(str(self.event.uuid), STATUS.REJECTED)
         except Exception as e:
             await log_error(f"Error in on_reject: {e}")
 
