@@ -6,7 +6,7 @@ services:
     container_name: mysql_container
     environment:
       MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: mmbot
+      MYSQL_DATABASE: your_database
       MYSQL_USER: your_username
       MYSQL_PASSWORD: your_password
     volumes:
@@ -21,7 +21,7 @@ services:
       DB_HOST: db
       MYSQL_USER: your_username
       MYSQL_PASSWORD: your_password
-      MYSQL_DATABASE: mmbot
+      MYSQL_DATABASE: your_database
     volumes:
       - ./bot.log:/app/bot.log
     depends_on:
