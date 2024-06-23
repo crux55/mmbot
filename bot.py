@@ -134,7 +134,7 @@ def get_event_from_channel_id(channel_id: str):
 
     except Error as e:
         print(f"Error: {e}")
-        return []
+        return None
 
     finally:
         if connection.is_connected():
