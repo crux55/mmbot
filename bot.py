@@ -104,7 +104,6 @@ async def log_error(message):
     
 def get_event_from_channel_id(channel_id: str):
     try:
-        # Replace with your MySQL database credentials
         connection = mysql.connector.connect(
             host=host,
             user=user,
@@ -144,12 +143,11 @@ def get_event_from_channel_id(channel_id: str):
 
 def update_event_status(id: str, status: STATUS):
     try:
-        # Replace with your MySQL database credentials
         connection = mysql.connector.connect(
-            host="localhost",
-            user="your_username",
-            password="your_password",
-            database="your_database"
+            host=host,
+            user=user,
+            password=password,
+            database=database
         )
 
         cursor = connection.cursor()
@@ -181,12 +179,11 @@ def update_event_status(id: str, status: STATUS):
             
 def get_events_by_status(status: str) -> List[Event]:
     try:
-        # Replace with your MySQL database credentials
         connection = mysql.connector.connect(
-            host="localhost",
-            user="your_username",
-            password="your_password",
-            database="your_database"
+            host=host,
+            user=user,
+            password=password,
+            database=database
         )
 
         cursor = connection.cursor()
@@ -220,12 +217,11 @@ def get_events_by_status(status: str) -> List[Event]:
 
 def save_event(event: Event):
     try:
-        # Replace with your MySQL database credentials
         connection = mysql.connector.connect(
-            host="localhost",
-            user="your_username",
-            password="your_password",
-            database="your_database"
+            host=host,
+            user=user,
+            password=password,
+            database=database
         )
 
         cursor = connection.cursor()
