@@ -161,7 +161,7 @@ def update_event_status(id: str, status: STATUS):
 
         # Execute the query to update the status
         cursor.execute(update_query, (
-            status,
+            str(status),
             id
         ))
 
@@ -177,7 +177,7 @@ def update_event_status(id: str, status: STATUS):
             cursor.close()
             connection.close()
             
-def get_events_by_status(status: str) -> List[Event]:
+def get_events_by_status(status: STATUS) -> List[Event]:
     try:
         connection = mysql.connector.connect(
             host=host,
@@ -196,7 +196,7 @@ def get_events_by_status(status: str) -> List[Event]:
         """
 
         # Execute the query to get the events with the specified status
-        cursor.execute(select_query, (status,))
+        cursor.execute(select_query, (str(status),))
 
         # Fetch all the matching records
         rows = cursor.fetchall()
