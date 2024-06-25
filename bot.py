@@ -356,7 +356,7 @@ class Hypeman_Approval_Message(discord.ui.View):
         self.channel_id = channel_id
 
     @discord.ui.button(label="Agree", style=discord.ButtonStyle.green)
-    async def button_callback(self):
+    async def button_callback(self, interaction: discord.Interaction, button):
         self.stop()
         try:
             await bot.get_channel(self.channel_id).send("@everyone HYPE MAN IN TOWN LET'S GO!!!!", allowed_mentions=discord.AllowedMentions(everyone=True))
