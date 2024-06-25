@@ -229,7 +229,7 @@ async def save_event(event: Event):
         # Prepare the SQL query
         insert_query = """
             INSERT INTO events (uuid, name, description, start_time, end_time, location, op_id, op_name, original_channel_id, event_id, event_forum_url, event_forum_id, status, hypeman_used)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
 
         # Execute the query with the event data
