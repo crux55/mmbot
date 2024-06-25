@@ -167,11 +167,12 @@ def approve_event(event: Event):
 
 
         connection.commit()
-        log_info("Event approved {}".format(event.name))
+        # log_info("Event approved {}".format(event.name))
 
     except Error as e:
         print(e)
         log_error(f"Error: {e}")
+        raise e
 
     finally:
         if connection.is_connected():
