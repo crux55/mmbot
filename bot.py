@@ -665,7 +665,7 @@ async def report(ctx):
     try:
         await bot.get_channel(MOD_CHANNEL_ID).send(
                 "{} , would you like to put the channel into slow mode?".format(report),
-                view=SlowMode_Approval_Message(ctx.channel.id), ephemeral=True
+                view=SlowMode_Approval_Message(ctx.channel.id)
             )
     except discord.Forbidden:
         log_error("The bot could not find permissions to post report")
