@@ -354,12 +354,12 @@ class Hypeman_Approval_Message(discord.ui.View):
     def __init__(self, channel_id: int):
         super().__init__()
         self.channel_id = channel_id
-        self.stop()
 
     @discord.ui.button(label="Agree", style=discord.ButtonStyle.green)
     async def button_callback(self, interaction: discord.Interaction, button):
         log_info("Button clicked")
         try:
+            self.stop()
             await use_hypeman(self.channel_id)
             await interaction.response.send_message("@everyone HYPE MAN IN TOWN LET'S GO!!!!", allowed_mentions=discord.AllowedMentions(everyone=True))
         except discord.HTTPException as e:
@@ -378,7 +378,7 @@ class Hypeman_Approval_Message(discord.ui.View):
     @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="disagree")
     async def on_disagree(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
-            log_info("Disagree button clicked")
+            self.stop()
             await interaction.response.send_message("You've disagreed.", ephemeral=True)
 
         except Exception as e:
