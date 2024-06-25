@@ -143,6 +143,7 @@ def get_event_from_channel_id(channel_id: str):
 
 def approve_event(event: Event):
     try:
+        log_info("in approve event")
         connection = mysql.connector.connect(
             host=host,
             user=user,
@@ -155,13 +156,13 @@ def approve_event(event: Event):
         # Prepare the SQL query
         update_query = """
             UPDATE events
-            SET status = %s
+            SET status = %s, event_id = %s, event_forum_url = %s, event_forum_id =%s
             WHERE uuid = %s
         """
 
         # Execute the query to update the status
         cursor.execute(update_query, (
-            'APPROVED',
+            'APPROVED', event.event_id, event.event_forum_url, event.event_forum_id,
             id
         ))
 
@@ -171,7 +172,7 @@ def approve_event(event: Event):
 
     except Error as e:
         print(e)
-        log_error(f"Error: {e.format_exc()}")
+        log_error(f"Error: {e}")
 
     finally:
         if connection.is_connected():
@@ -405,10 +406,10 @@ class Event_Approval_Message(discord.ui.View):
                 entity_type=discord.EntityType.external,
                 privacy_level=discord.PrivacyLevel.guild_only
             )
-
+            log_info("before assign")
             # Update the event with the scheduled event info
             self.event.event_id = event.id
-
+            log_info("after assign")
             # Update the status to APPROVED
             approve_event(self.event)
         except Exception as e:
