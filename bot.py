@@ -517,6 +517,7 @@ async def hypeman(ctx):
         return
     log_info(event.hypeman_used)
     if event.hypeman_used is True:
+        log_info("Hypeman has already been used")
         await ctx.send("The hype didn't work. The hype man has been use and is tired", ephemeral=True)
         return
     # Get the current time
