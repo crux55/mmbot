@@ -475,7 +475,7 @@ async def hypeman(ctx):
     if timedelta(hours=0) <= time_difference <= timedelta(hours=72):
         log_info("event.event_forum_id: {}".format(event.event_forum_id))
         log_info("channel_id: {}".format(channel_id))
-        log_info("event.event_forum_id == channel_id: {}".format(event.event_forum_id == channel_id)
+        log_info("event.event_forum_id == channel_id: {}".format(event.event_forum_id == channel_id))
         if event.event_forum_id == channel_id:
             log_info("Hypeman called")
             await bot.get_channel(channel_id).send(
