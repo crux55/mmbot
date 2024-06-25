@@ -413,7 +413,7 @@ class Event_Approval_Message(discord.ui.View):
             # Update the status to APPROVED
             approve_event(self.event)
         except Exception as e:
-            await log_error(f"Error in button_callback: {e.format_exc()}")
+            await log_error(f"Error in button_callback: {e}")
 
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red, custom_id="reject")
