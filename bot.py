@@ -697,7 +697,7 @@ async def mymeetups(ctx):
     for event in scheduled_events:
         users = event.users
         log_info(type(users))
-        if any(user.id == user_id for user in users):
+        if any(user.id == user_id for user in users()):
             user_events.append(event)
 
     if not user_events:
