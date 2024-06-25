@@ -291,22 +291,6 @@ async def save_event(event: Event):
             cursor.close()
             connection.close()
 
-async def load_events_from_disk():
-    """
-    Load a list of events from disk.
-
-    Returns:
-        list: The list of events, or an empty list if the file doesn't exist or an error occurred.
-    """
-    try:
-        with open(EVENTS_FILE_NAME, 'rb') as f:
-            return pickle.load(f)
-    except FileNotFoundError:
-        return []
-    except (pickle.UnpicklingError, OSError) as e:
-        await log_error(f"Error loading events from disk: {e}")
-        return []
-
 def convert_string_to_dt(dt_string):
     """
     Convert a date and time string to a datetime object.
@@ -478,9 +462,10 @@ async def hypeman(ctx):
     await ctx.message.delete()
 
     channel_id = ctx.channel.id
+    log_info("channel id: {}".format(channel_id))
 
     event = get_event_from_channel_id(channel_id)
-    
+    log_info("event: {}".format(event))
     if event is None:
         await ctx.send("The hype didn't work. There was an error", ephemeral=True)
         log_error("More than one event found for channel. I've no idea how this could even happen")
