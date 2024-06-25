@@ -141,6 +141,42 @@ def get_event_from_channel_id(channel_id: str):
             cursor.close()
             connection.close()
 
+def approve_event(event: Event):
+    try:
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
+
+        cursor = connection.cursor()
+
+        # Prepare the SQL query
+        update_query = """
+            UPDATE events
+            SET status = %s, event_id = %s, event_forum_url = %s, event_forum_id =%s
+            WHERE uuid = %s
+        """
+
+        # Execute the query to update the status
+        cursor.execute(update_query, (
+            str(event.status), event.event_id, event.event_forum_url, event.event_id,
+            id
+        ))
+
+
+        connection.commit()
+        log_info("Event updated successfully! {} to {}".format(id, status))
+
+    except Error as e:
+        log_error(f"Error: {e}")
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
 def update_event_status(id: str, status: STATUS):
     try:
         connection = mysql.connector.connect(
@@ -373,7 +409,7 @@ class Event_Approval_Message(discord.ui.View):
             self.event.event_id = event.id
 
             # Update the status to APPROVED
-            update_event_status(str(self.event.uuid), STATUS.APPROVED)
+            approve_event(event)
         except Exception as e:
             await log_error(f"Error in button_callback: {e}")
 
