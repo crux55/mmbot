@@ -166,12 +166,12 @@ def approve_event(event: Event):
         # Execute the query to update the status
         cursor.execute(update_query, (
             'APPROVED', str(event.event_id), str(event.event_forum_url), str(event.event_forum_id),
-            id
+            event.event_id
         ))
 
 
         connection.commit()
-        # log_info("Event approved {}".format(event.name))
+        log_info("Event approved {}".format(event.name))
 
     except Error as e:
         print(e)
