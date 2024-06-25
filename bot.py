@@ -201,7 +201,7 @@ async def use_hypeman(id: str):
         # Execute the query to update the status
         cursor.execute(update_query, (
             str(True),
-            id
+            str(id)
         ))
 
 
