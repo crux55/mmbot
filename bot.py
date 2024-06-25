@@ -175,7 +175,7 @@ async def approve_event(event: Event):
 
     except Error as e:
         print(e)
-        log_error(f"Error: {e}")
+        await log_error(f"Error: {e}")
 
     finally:
         if connection.is_connected():
