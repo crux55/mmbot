@@ -161,7 +161,7 @@ def approve_event(event: Event):
 
         # Execute the query to update the status
         cursor.execute(update_query, (
-            str(event.status), event.event_id, event.event_forum_url, event.event_forum_id,
+            str(STATUS.APPROVED), event.event_id, event.event_forum_url, event.event_forum_id,
             id
         ))
 
