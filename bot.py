@@ -171,7 +171,7 @@ def approve_event(event: Event):
 
     except Error as e:
         print(e)
-        log_error(f"Error: {e}")
+        log_error(f"Error: {e.format_exc()}")
 
     finally:
         if connection.is_connected():
