@@ -181,6 +181,43 @@ async def approve_event(event: Event):
             cursor.close()
             connection.close()
 
+
+def use_hypeman(id: str):
+    try:
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
+
+        cursor = connection.cursor()
+
+        # Prepare the SQL query
+        update_query = """
+            UPDATE events
+            SET hypeman_user = %s
+            WHERE uuid = %s
+        """
+
+        # Execute the query to update the status
+        cursor.execute(update_query, (
+            str(True),
+            id
+        ))
+
+
+        connection.commit()
+        log_info("Hypeman used {}".format(id))
+
+    except Error as e:
+        log_error(f"Error: {e}")
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
 def update_event_status(id: str, status: STATUS):
     try:
         connection = mysql.connector.connect(
@@ -331,7 +368,8 @@ class Hypeman_Approval_Message(discord.ui.View):
     @discord.ui.button(label="Agree", style=discord.ButtonStyle.green)
     async def button_callback(self, interaction: discord.Interaction, button):
         self.stop()
-        await bot.get_channel(self.channel_id).send("<@everyone> HYPE MAN IN TOWN LET'S GO!!!!")
+        await bot.get_channel(self.channel_id).send("@everyone HYPE MAN IN TOWN LET'S GO!!!!")
+        use_hypeman(self.channel_id)
     
     @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="reject")
     async def on_reject(self, interaction: discord.Interaction, button: discord.ui.Button):
