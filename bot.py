@@ -351,27 +351,36 @@ def convert_string_to_dt(dt_string):
     return aware_dt
 
 class Hypeman_Approval_Message(discord.ui.View):
-    """A view for approving events."""
-
     def __init__(self, channel_id: str):
-        """
-        Initialize the view with the given event.
-
-        Args:
-            event (Event): The event to be approved.
-        """
         super().__init__()
         self.channel_id = channel_id
 
     @discord.ui.button(label="Agree", style=discord.ButtonStyle.green)
     async def button_callback(self, interaction: discord.Interaction, button):
         self.stop()
-        await bot.get_channel(self.channel_id).send("@everyone HYPE MAN IN TOWN LET'S GO!!!!")
-        await use_hypeman(self.channel_id)
+        try:
+            await bot.get_channel(self.channel_id).send("@everyone HYPE MAN IN TOWN LET'S GO!!!!", allowed_mentions=discord.AllowedMentions(everyone=True))
+            await use_hypeman(self.channel_id)
+        except discord.HTTPException as e:
+            # Handle HTTP exceptions that occur due to network problems, Discord server errors, etc.
+            log_error(f"HTTPException occurred: {e}")
+        except discord.Forbidden as e:
+            # Handle exceptions due to forbidden actions, like sending messages in a channel where the bot doesn't have permission
+            log_error(f"Forbidden action: {e}")
+        except discord.NotFound as e:
+            # Handle exceptions for when the channel is not found
+            log_error(f"Channel not found: {e}")
+        except Exception as e:
+            # Handle other exceptions
+            log_error(f"An unexpected error occurred: {e}")
     
     @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="reject")
     async def on_reject(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.stop()
+        try:
+            self.stop()
+        except Exception as e:
+            # Handle other exceptions
+            log_error(f"An unexpected error occurred: {e}")
 
 class Event_Approval_Message(discord.ui.View):
     """A view for approving events."""
