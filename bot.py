@@ -115,7 +115,7 @@ def get_event_from_channel_id(channel_id: str):
 
         # Prepare the SQL query
         select_query = """
-            SELECT uuid, name, description, start_time, end_time, location, op_id, op_name, original_channel_id, event_id, event_forum_url, event_forum_id
+            SELECT uuid, name, description, start_time, end_time, location, op_id, op_name, original_channel_id, event_id, event_forum_url, event_forum_id, hypeman_used
             FROM events
             WHERE event_forum_id = %s
         """
@@ -354,6 +354,7 @@ class Hypeman_Approval_Message(discord.ui.View):
     def __init__(self, channel_id: int):
         super().__init__()
         self.channel_id = channel_id
+        self.stop()
 
     @discord.ui.button(label="Agree", style=discord.ButtonStyle.green)
     async def button_callback(self, interaction: discord.Interaction, button):
