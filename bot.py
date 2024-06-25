@@ -475,7 +475,8 @@ async def hypeman(ctx):
     now = datetime.now()
 
     # Calculate the time difference
-    time_difference = event.start_time - now
+    time_difference = datetime.strptime(event.start_time, "%Y-%m-%d %H:%M:%S") - now
+    log_info("time difference: {}".format(time_difference))
     if timedelta(hours=0) <= time_difference <= timedelta(hours=72):
         if event.event_forum_id is channel_id:
             await bot.get_channel(ADMIN_CHANNEL_ID).send(
@@ -484,6 +485,7 @@ async def hypeman(ctx):
             )
             
     else:
+        log_info("It is not within 72 hours of the event.")
         await ctx.send("It is not within 72 hours of the event.", ephemeral=True)
 
 @bot.command()
