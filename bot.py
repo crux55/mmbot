@@ -663,7 +663,7 @@ async def report(ctx):
         await ctx.send("The bot does not have the required permissions to fetch message history.", ephemeral=True)
         return
     try:
-        await bot.get_channel(MOD_CHANNEL_ID)(
+        await bot.get_channel(MOD_CHANNEL_ID).send(
                 "{} , would you like to put the channel into slow mode?".format(report),
                 view=SlowMode_Approval_Message(ctx.channel.id), ephemeral=True
             )
