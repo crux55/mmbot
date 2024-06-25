@@ -473,10 +473,7 @@ async def hypeman(ctx):
     # Calculate the time difference
     time_difference = event.start_time - now
     if timedelta(hours=0) <= time_difference <= timedelta(hours=72):
-        log_info("Type of event.event_forum_id: {}".format(type(event.event_forum_id)))
-        log_info("Type of channel_id: {}".format(type(channel_id)))
-        log_info("event.event_forum_id == channel_id: {}".format(str(event.event_forum_id) == str(channel_id)))
-        if event.event_forum_id == channel_id:
+        if event.event_forum_id == str(channel_id):
             log_info("Hypeman called")
             await bot.get_channel(channel_id).send(
                 f"You can only call the hypeman once before an event. Are you sure you want to do this now?",
