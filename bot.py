@@ -517,6 +517,7 @@ async def hypeman(ctx):
     log_info(event.hypeman_used)
     if event.hypeman_used is True:
         await ctx.send("The hype didn't work. The hype man has been use and is tired", ephemeral=True)
+        return
     # Get the current time
     now = datetime.now()
     # Calculate the time difference
