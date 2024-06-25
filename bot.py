@@ -164,7 +164,7 @@ async def approve_event(event: Event):
 
         # Execute the query to update the status
         cursor.execute(update_query, (
-            'APPROVED', str(event.event_id), str(event.event_forum_url), str(event.event_forum_id),
+            str(STATUS.APPROVED), str(event.event_id), str(event.event_forum_url), str(event.event_forum_id),
             str(event.uuid)
         ))
 
