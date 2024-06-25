@@ -351,6 +351,27 @@ def convert_string_to_dt(dt_string):
 
     return aware_dt
 
+class SlowMode_Approval_Message(discord.ui.View):
+    def __init__(self, channel_id: int):
+        super().__init__()
+        self.channel_id = channel_id
+
+    @discord.ui.button(label="Agree", style=discord.ButtonStyle.green)
+    async def button_callback(self, interaction: discord.Interaction, button):
+        await bot.get_channel(self.channel_id).edit(slowmode_delay=30)
+        await bot.get_channel(self.channel_id).send("The channel has been put into slow mode for 30 seconds. Please be mindful of the rules and refrain for engaging in futher arguments")
+
+
+    @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="disagree")
+    async def on_disagree(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            self.stop()
+            await interaction.response.send_message("You've disagreed.", ephemeral=True)
+
+        except Exception as e:
+            # Handle other exceptions
+            log_error(f"An unexpected error occurred: {e}")
+
 class Hypeman_Approval_Message(discord.ui.View):
     def __init__(self, channel_id: int):
         super().__init__()
@@ -627,7 +648,7 @@ async def report(ctx):
         await ctx.send("The bot does not have the required permissions to delete messages or fetch message history.", ephemeral=True)
         return
 
-    report = f"{message.content} - <@{message.author.id}>"
+    report = f"The following comment has been reported: {message.content} - <@{message.author.id}>"
 
     # Check for duplicate reports
     report_channel = bot.get_channel(MOD_CHANNEL_ID)
@@ -641,14 +662,14 @@ async def report(ctx):
         await ctx.send("The bot does not have the required permissions to fetch message history.", ephemeral=True)
         return
     try:
-        await report_channel.send(report)
+        await ctx.send(
+                "{} , would you like to put the channel into slow mode?".format(report),
+                view=SlowMode_Approval_Message(ctx.channel.id), ephemeral=True
+            )
     except discord.Forbidden:
         log_error("The bot could not find permissions to post report")
         await ctx.send("The bot does not have the required permissions to send report.", ephemeral=True)
         return
-    await ctx.channel.edit(slowmode_delay=30)
-    await ctx.send("The channel has been put into slow mode for 30 seconds. Please be mindful of the rules and refrain for engaging in futher arguments")
-
 @bot.command()
 async def quotethat(ctx):
     """
