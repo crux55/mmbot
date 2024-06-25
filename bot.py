@@ -24,6 +24,7 @@ CHEESECAKE_USER_ID = int(os.getenv('CHEESECAKE_USER_ID'))
 BOT_CHANNEL_ID = int(os.getenv('BOT_CHANNEL_ID'))
 QUOTE_CHANNEL_ID = int(os.getenv('QUOTE_CHANNEL_ID'))
 BOT_TOKEN = os.getenv('BOT_TOKEN')
+MOD_CHANNEL_ID = int(os.getenv('MOD_CHANNEL_ID'))
 
 host = os.getenv('DB_HOST', 'localhost')
 user = os.getenv('MYSQL_USER')
@@ -614,6 +615,39 @@ async def on_scheduled_event_user_add(event, user):
                 await bot.get_channel(_event.event_forum_id).send(f"User <@{user.id}> has joined the event.")
     except Exception as e:
         await log_error(f"Error in on_scheduled_event_user_add: {e}")
+
+
+@bot.command()
+async def report(ctx):
+    try:
+        await ctx.message.delete()
+        message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+    except discord.Forbidden:
+        log_error("The bot could not find permissions to find comment")
+        await ctx.send("The bot does not have the required permissions to delete messages or fetch message history.", ephemeral=True)
+        return
+
+    report = f"{message.content} - <@{message.author.id}>"
+
+    # Check for duplicate reports
+    report_channel = bot.get_channel(MOD_CHANNEL_ID)
+    try:
+        async for old_message in report.history(limit=200):  # Adjust the limit as needed
+            if old_message.content == report:
+                await ctx.send("This has already been reported.", ephemeral=True)
+                return
+    except discord.Forbidden:
+        log_error("The bot could not find permissions to get quote channel")
+        await ctx.send("The bot does not have the required permissions to fetch message history.", ephemeral=True)
+        return
+    try:
+        await report_channel.send(report)
+    except discord.Forbidden:
+        log_error("The bot could not find permissions to post report")
+        await ctx.send("The bot does not have the required permissions to send report.", ephemeral=True)
+        return
+    await ctx.channel.edit(slowmode_delay=30)
+    await ctx.send("The channel has been put into slow mode for 30 seconds. Please be mindful of the rules and refrain for engaging in futher arguments")
 
 @bot.command()
 async def quotethat(ctx):
