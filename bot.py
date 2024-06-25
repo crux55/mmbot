@@ -161,12 +161,11 @@ async def approve_event(event: Event):
             SET status = %s, event_id = %s, event_forum_url = %s, event_forum_id =%s
             WHERE uuid = %s
         """
-        log_info("{}".format(str(event.event_id)))
 
         # Execute the query to update the status
         cursor.execute(update_query, (
             'APPROVED', str(event.event_id), str(event.event_forum_url), str(event.event_forum_id),
-            str(event.event_id)
+            str(event.uuid)
         ))
 
 
