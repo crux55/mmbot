@@ -358,6 +358,7 @@ class SlowMode_Approval_Message(discord.ui.View):
 
     @discord.ui.button(label="Agree", style=discord.ButtonStyle.green)
     async def button_callback(self, interaction: discord.Interaction, button):
+        self.stop()
         await bot.get_channel(self.channel_id).edit(slowmode_delay=30)
         await bot.get_channel(self.channel_id).send("The channel has been put into slow mode for 30 seconds. Please be mindful of the rules and refrain for engaging in futher arguments")
 
