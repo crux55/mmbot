@@ -517,7 +517,7 @@ async def hypeman(ctx):
         return
     if bool(event.hypeman_used) is True:
         log_info("Hypeman has already been used")
-        await ctx.send("The hype didn't work. The hype man has been use and is tired", ephemeral=True)
+        await ctx.send("The hype didn't work. The hype man has been used and is tired", ephemeral=True)
         return
     # Get the current time
     now = datetime.now()
@@ -595,25 +595,25 @@ async def createevent(ctx, name=None, description=None, start_time=None, end_tim
 
     await ctx.send("Your event has been sent to the EC's for approval. Please be patient while they find time to review", ephemeral=True)
 
-# @bot.event
-# async def on_scheduled_event_user_add(event, user):
-#     """
-#     Handle the addition of a user to a scheduled event.
+@bot.event
+async def on_scheduled_event_user_add(event, user):
+    """
+    Handle the addition of a user to a scheduled event.
 
-#     This method checks if the user is already in the event. If not, it sends a message to the event's forum channel.
+    This method checks if the user is already in the event. If not, it sends a message to the event's forum channel.
 
-#     Args:
-#         event (discord.ScheduledEvent): The scheduled event.
-#         user (discord.User): The user who was added to the event.
-#     """
-#     try:
-#         approved_events = get_events_by_status(STATUS.APPROVED)
-#         for _event in approved_events:
-#             # If the user is not in the event, send a message to the event's forum channel
-#             if _event.event_id == event.id:
-#                 await bot.get_channel(_event.event_forum_id).send(f"User <@{user.id}> has joined the event.")
-#     except Exception as e:
-#         await log_error(f"Error in on_scheduled_event_user_add: {e}")
+    Args:
+        event (discord.ScheduledEvent): The scheduled event.
+        user (discord.User): The user who was added to the event.
+    """
+    try:
+        approved_events = get_events_by_status(STATUS.APPROVED)
+        for _event in approved_events:
+            # If the user is not in the event, send a message to the event's forum channel
+            if _event.event_id == str(event.id):
+                await bot.get_channel(_event.event_forum_id).send(f"User <@{user.id}> has joined the event.")
+    except Exception as e:
+        await log_error(f"Error in on_scheduled_event_user_add: {e}")
 
 @bot.command()
 async def quotethat(ctx):
@@ -696,6 +696,7 @@ async def mymeetups(ctx):
     user_events = []
     for event in scheduled_events:
         users = event.users
+        log_info(type(users))
         if any(user.id == user_id for user in users):
             user_events.append(event)
 
