@@ -351,7 +351,7 @@ def convert_string_to_dt(dt_string):
     return aware_dt
 
 class Hypeman_Approval_Message(discord.ui.View):
-    def __init__(self, channel_id: str):
+    def __init__(self, channel_id: int):
         super().__init__()
         self.channel_id = channel_id
 
