@@ -4,7 +4,6 @@ import uuid
 import dataclasses
 import discord
 from discord.ext import commands
-import pickle
 import logging
 from enum import Enum
 from dotenv import load_dotenv
@@ -12,7 +11,6 @@ import os
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime, timedelta
-import traceback
 
 
 # Load the .env file
@@ -182,7 +180,7 @@ async def approve_event(event: Event):
             connection.close()
 
 
-def use_hypeman(id: str):
+async def use_hypeman(id: str):
     try:
         connection = mysql.connector.connect(
             host=host,
@@ -211,7 +209,7 @@ def use_hypeman(id: str):
         log_info("Hypeman used {}".format(id))
 
     except Error as e:
-        log_error(f"Error: {e}")
+        await log_error(f"Error: {e}")
 
     finally:
         if connection.is_connected():
@@ -369,7 +367,7 @@ class Hypeman_Approval_Message(discord.ui.View):
     async def button_callback(self, interaction: discord.Interaction, button):
         self.stop()
         await bot.get_channel(self.channel_id).send("@everyone HYPE MAN IN TOWN LET'S GO!!!!")
-        use_hypeman(self.channel_id)
+        await use_hypeman(self.channel_id)
     
     @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="reject")
     async def on_reject(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -438,7 +436,6 @@ class Event_Approval_Message(discord.ui.View):
             await approve_event(self.event)
         except Exception as e:
             await log_error(f"Error in button_callback: {e}")
-            traceback.print_exc()
 
 
 
