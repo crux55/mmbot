@@ -462,24 +462,18 @@ async def hypeman(ctx):
     await ctx.message.delete()
 
     channel_id = ctx.channel.id
-    log_info("channel id: {}".format(channel_id))
 
     event = get_event_from_channel_id(channel_id)
-    log_info("event: {}".format(event))
     if event is None:
         await ctx.send("The hype didn't work. There was an error", ephemeral=True)
         log_error("More than one event found for channel. I've no idea how this could even happen")
         return    
-    log_info("after event check")
     # Get the current time
     now = datetime.now()
-    log_info("now: {}".format(now))
     # Calculate the time difference
     time_difference = event.start_time - now
-    log_info("time difference: {}".format(time_difference))
     if timedelta(hours=0) <= time_difference <= timedelta(hours=72):
-        log_info("event_forum_id: {}. channel id:{}".format(event.event_forum_id, channel_id))
-        if event.event_forum_id is channel_id:
+        if event.event_forum_id == channel_id:
             await bot.get_channel(channel_id).send(
                 f"You can only call the hypeman once before an event. Are you sure you want to do this now?",
                 view=Hypeman_Approval_Message(channel_id),
