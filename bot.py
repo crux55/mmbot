@@ -515,9 +515,7 @@ async def hypeman(ctx):
         await ctx.send("The hype didn't work. There was an error", ephemeral=True)
         log_error("More than one event found for channel. I've no idea how this could even happen")
         return
-    log_info(event.hypeman_used)
-    log_info(type(event.hypeman_used))
-    if event.hypeman_used is True:
+    if bool(event.hypeman_used) is True:
         log_info("Hypeman has already been used")
         await ctx.send("The hype didn't work. The hype man has been use and is tired", ephemeral=True)
         return
