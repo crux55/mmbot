@@ -361,7 +361,7 @@ class Hypeman_Approval_Message(discord.ui.View):
         try:
             # await bot.get_channel(self.channel_id).send("@everyone HYPE MAN IN TOWN LET'S GO!!!!", allowed_mentions=discord.AllowedMentions(everyone=True))
             # await use_hypeman(self.channel_id)
-            interaction.response.send_message("@everyone HYPE MAN IN TOWN LET'S GO!!!!", allowed_mentions=discord.AllowedMentions(everyone=True))
+            await interaction.response.send_message("@everyone HYPE MAN IN TOWN LET'S GO!!!!", allowed_mentions=discord.AllowedMentions(everyone=True))
         except discord.HTTPException as e:
             # Handle HTTP exceptions that occur due to network problems, Discord server errors, etc.
             log_error(f"HTTPException occurred: {e}")
