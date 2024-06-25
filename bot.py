@@ -695,10 +695,11 @@ async def mymeetups(ctx):
     # Check each event to see if the user is in the list of users
     user_events = []
     for event in scheduled_events:
-        users = await event.users()
-        log_info(type(users))
-        if any(user.id == user_id for user in users):
-            user_events.append(event)
+        async for user in event.users():  # Use async for to iterate over async generator
+            if user.id == user_id:
+                user_events.append(event)
+                break  # Exit the loop early if the user is found
+
 
     if not user_events:
         await ctx.send("You have not joined any meetups.", ephemeral=True)
