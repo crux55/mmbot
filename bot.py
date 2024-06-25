@@ -155,13 +155,13 @@ def approve_event(event: Event):
         # Prepare the SQL query
         update_query = """
             UPDATE events
-            SET status = %s, event_id = %s, event_forum_url = %s, event_forum_id =%s
+            SET status = %s
             WHERE uuid = %s
         """
 
         # Execute the query to update the status
         cursor.execute(update_query, (
-            'APPROVED', event.event_id, event.event_forum_url, event.event_forum_id,
+            'APPROVED',
             id
         ))
 
@@ -172,7 +172,6 @@ def approve_event(event: Event):
     except Error as e:
         print(e)
         log_error(f"Error: {e}")
-        raise e
 
     finally:
         if connection.is_connected():
