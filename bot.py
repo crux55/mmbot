@@ -194,7 +194,7 @@ async def use_hypeman(id: str):
         # Prepare the SQL query
         update_query = """
             UPDATE events
-            SET hypeman_user = %s
+            SET hypeman_used = %s
             WHERE uuid = %s
         """
 
