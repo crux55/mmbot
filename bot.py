@@ -379,6 +379,8 @@ class Hypeman_Approval_Message(discord.ui.View):
     async def on_disagree(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
             log_info("Disagree button clicked")
+            await interaction.response.send_message("You've disagreed.", ephemeral=True)
+
         except Exception as e:
             # Handle other exceptions
             log_error(f"An unexpected error occurred: {e}")
