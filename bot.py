@@ -695,7 +695,7 @@ async def mymeetups(ctx):
     # Check each event to see if the user is in the list of users
     user_events = []
     for event in scheduled_events:
-        users = event.users()
+        users = await event.users()
         log_info(type(users))
         if any(user.id == user_id for user in users):
             user_events.append(event)
