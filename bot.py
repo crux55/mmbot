@@ -663,9 +663,9 @@ async def report(ctx):
         await ctx.send("The bot does not have the required permissions to fetch message history.", ephemeral=True)
         return
     try:
-        await ctx.send(
+        await bot.get_channel(MOD_CHANNEL_ID)(
                 "{} , would you like to put the channel into slow mode?".format(report),
-                view=SlowMode_Approval_Message(MOD_CHANNEL_ID), ephemeral=True
+                view=SlowMode_Approval_Message(ctx.channel.id), ephemeral=True
             )
     except discord.Forbidden:
         log_error("The bot could not find permissions to post report")
