@@ -195,7 +195,7 @@ async def use_hypeman(id: str):
         update_query = """
             UPDATE events
             SET hypeman_used = %s
-            WHERE uuid = %s
+            WHERE event_forum_id = %s
         """
 
         # Execute the query to update the status
