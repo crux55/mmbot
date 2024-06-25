@@ -12,6 +12,8 @@ import os
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime, timedelta
+import traceback
+
 
 # Load the .env file
 load_dotenv()
@@ -414,6 +416,8 @@ class Event_Approval_Message(discord.ui.View):
             approve_event(self.event)
         except Exception as e:
             await log_error(f"Error in button_callback: {e}")
+            traceback.print_exc()
+
 
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red, custom_id="reject")
