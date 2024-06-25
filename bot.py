@@ -470,12 +470,12 @@ async def hypeman(ctx):
         await ctx.send("The hype didn't work. There was an error", ephemeral=True)
         log_error("More than one event found for channel. I've no idea how this could even happen")
         return    
-    
+    log_info("after event check")
     # Get the current time
     now = datetime.now()
-
+    log_info("now: {}".format(now))
     # Calculate the time difference
-    time_difference = datetime.strptime(event.start_time, "%Y-%m-%d %H:%M:%S") - now
+    time_difference = event.start_time - now
     log_info("time difference: {}".format(time_difference))
     if timedelta(hours=0) <= time_difference <= timedelta(hours=72):
         if event.event_forum_id is channel_id:
