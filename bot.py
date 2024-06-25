@@ -632,7 +632,7 @@ async def report(ctx):
     # Check for duplicate reports
     report_channel = bot.get_channel(MOD_CHANNEL_ID)
     try:
-        async for old_message in report.history(limit=200):  # Adjust the limit as needed
+        async for old_message in report_channel.history(limit=200):  # Adjust the limit as needed
             if old_message.content == report:
                 await ctx.send("This has already been reported.", ephemeral=True)
                 return
