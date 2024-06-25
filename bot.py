@@ -409,7 +409,7 @@ class Event_Approval_Message(discord.ui.View):
             self.event.event_id = event.id
 
             # Update the status to APPROVED
-            approve_event(event)
+            approve_event(self.event)
         except Exception as e:
             await log_error(f"Error in button_callback: {e}")
 
