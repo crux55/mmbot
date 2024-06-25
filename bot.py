@@ -215,7 +215,7 @@ def get_events_by_status(status: STATUS) -> List[Event]:
             cursor.close()
             connection.close()
 
-def save_event(event: Event):
+async def save_event(event: Event):
     try:
         connection = mysql.connector.connect(
             host=host,
@@ -244,7 +244,7 @@ def save_event(event: Event):
         log_info("Event saved successfully! {}".format(event.name))
 
     except Error as e:
-        log_error(f"Error: {e}")
+        await log_error(f"Error: {e}")
 
     finally:
         if connection.is_connected():
@@ -509,7 +509,7 @@ async def createevent(ctx, name=None, description=None, start_time=None, end_tim
     # Create a new Event object
     event = Event(uuid.uuid4(), name, description, start_time, end_time, location, ctx.author.id, ctx.author.name, ctx.channel.id)
 
-    save_event(event)
+    await save_event(event)
 
     # Send an approval request
     await bot.get_channel(ADMIN_CHANNEL_ID).send(
