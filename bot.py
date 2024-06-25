@@ -359,7 +359,6 @@ class Hypeman_Approval_Message(discord.ui.View):
     async def button_callback(self, interaction: discord.Interaction, button):
         log_info("Button clicked")
         try:
-            # await bot.get_channel(self.channel_id).send("@everyone HYPE MAN IN TOWN LET'S GO!!!!", allowed_mentions=discord.AllowedMentions(everyone=True))
             await use_hypeman(self.channel_id)
             await interaction.response.send_message("@everyone HYPE MAN IN TOWN LET'S GO!!!!", allowed_mentions=discord.AllowedMentions(everyone=True))
         except discord.HTTPException as e:
@@ -514,7 +513,9 @@ async def hypeman(ctx):
     if event is None:
         await ctx.send("The hype didn't work. There was an error", ephemeral=True)
         log_error("More than one event found for channel. I've no idea how this could even happen")
-        return    
+        return
+    if event.hypeman_used:
+        await ctx.send("The hype didn't work. The hype man has been use and is tired", ephemeral=True)
     # Get the current time
     now = datetime.now()
     # Calculate the time difference
@@ -524,7 +525,7 @@ async def hypeman(ctx):
             log_info("Hypeman called")
             await bot.get_channel(channel_id).send(
                 f"You can only call the hypeman once before an event. Are you sure you want to do this now?",
-                view=Hypeman_Approval_Message(channel_id),
+                view=Hypeman_Approval_Message(channel_id), ephemeral=True
             )
             
     else:
