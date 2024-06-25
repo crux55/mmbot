@@ -133,7 +133,7 @@ def get_event_from_channel_id(channel_id: str):
         return events[0]
 
     except Error as e:
-        print(f"Error: {e}")
+        log_error(f"Error: {e}")
         return None
 
     finally:
@@ -170,7 +170,7 @@ def update_event_status(id: str, status: STATUS):
         log_info("Event updated successfully! {} to {}".format(id, status))
 
     except Error as e:
-        print(f"Error: {e}")
+        log_error(f"Error: {e}")
 
     finally:
         if connection.is_connected():
@@ -207,7 +207,7 @@ def get_events_by_status(status: STATUS) -> List[Event]:
         return events
 
     except Error as e:
-        print(f"Error: {e}")
+        log_error(f"Error: {e}")
         return []
 
     finally:
@@ -244,7 +244,7 @@ def save_event(event: Event):
         log_info("Event saved successfully! {}".format(event.name))
 
     except Error as e:
-        print(f"Error: {e}")
+        log_error(f"Error: {e}")
 
     finally:
         if connection.is_connected():
