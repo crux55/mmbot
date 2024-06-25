@@ -143,7 +143,7 @@ def get_event_from_channel_id(channel_id: str):
             cursor.close()
             connection.close()
 
-def approve_event(event: Event):
+async def approve_event(event: Event):
     try:
         log_info("in approve event")
         connection = mysql.connector.connect(
@@ -175,7 +175,7 @@ def approve_event(event: Event):
 
     except Error as e:
         print(e)
-        await log_error(f"Error: {e}")
+        log_error(f"Error: {e}")
 
     finally:
         if connection.is_connected():
@@ -414,7 +414,7 @@ class Event_Approval_Message(discord.ui.View):
             self.event.event_id = event.id
             log_info("after assign")
             # Update the status to APPROVED
-            approve_event(self.event)
+            await approve_event(self.event)
         except Exception as e:
             await log_error(f"Error in button_callback: {e}")
             traceback.print_exc()
