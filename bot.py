@@ -378,7 +378,7 @@ class Hypeman_Approval_Message(discord.ui.View):
     @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="disagree")
     async def on_reject(self, interaction: discord.Interaction, button: discord.ui.Button):
         try:
-            self.stop()
+            pass
         except Exception as e:
             # Handle other exceptions
             log_error(f"An unexpected error occurred: {e}")
