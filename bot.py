@@ -1,12 +1,17 @@
 import datetime
+from typing import List
 import uuid
 import dataclasses
 import discord
 from discord.ext import commands
-import pickle
 import logging
+from enum import Enum
 from dotenv import load_dotenv
 import os
+import mysql.connector
+from mysql.connector import Error
+from datetime import datetime, timedelta
+
 
 # Load the .env file
 load_dotenv()
@@ -19,6 +24,13 @@ CHEESECAKE_USER_ID = int(os.getenv('CHEESECAKE_USER_ID'))
 BOT_CHANNEL_ID = int(os.getenv('BOT_CHANNEL_ID'))
 QUOTE_CHANNEL_ID = int(os.getenv('QUOTE_CHANNEL_ID'))
 BOT_TOKEN = os.getenv('BOT_TOKEN')
+MOD_CHANNEL_ID = int(os.getenv('MOD_CHANNEL_ID'))
+
+host = os.getenv('DB_HOST', 'localhost')
+user = os.getenv('MYSQL_USER')
+password = os.getenv('MYSQL_PASSWORD')
+database = os.getenv('MYSQL_DATABASE')
+
 
 # File names
 EVENTS_FILE_NAME = "events.pkl"
@@ -30,9 +42,6 @@ ONE_DAY_IN_SECONDS = 60 * 60 * 24
 intents = discord.Intents.all()
 intents.message_content = True
 intents.guild_scheduled_events = True
-
-# Global variables
-EVENTS = []
 
 # Create the bot
 bot = commands.Bot(command_prefix="/", intents=intents)
@@ -53,6 +62,27 @@ handler.setFormatter(formatter)
 # Add the handlers to the logger
 logger.addHandler(handler)
 
+@dataclasses.dataclass
+class Event:
+    uuid: str
+    name: str
+    description: str
+    start_time: str
+    end_time: str
+    location: str
+    op_id: int
+    op_name: str
+    original_channel_id: int
+    event_id: str = ""
+    event_forum_url: str = ""
+    event_forum_id: str = ""
+    hypeman_used: bool = False
+
+class STATUS(Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
 def log_info(message):
     """
     Log an informational message.
@@ -71,53 +101,231 @@ async def log_error(message):
     """
     await bot.get_channel(BOT_CHANNEL_ID).send(f"User <@{CHEESECAKE_USER_ID}> there's been an error: {message}")
     logger.error(message)
-
-async def add_to_events(event):
-    """
-    Add an event to the EVENTS list and save the list to disk.
-
-    Args:
-        event (Event): The event to add.
-    """
-    EVENTS.append(event)
-    await save_events_to_disk(EVENTS)
-
-async def load_events():
-    """
-    Load the EVENTS list from disk.
-    """
-    global EVENTS
-    EVENTS = await load_events_from_disk()
-
-async def save_events_to_disk(events):
-    """
-    Save a list of events to disk.
-
-    Args:
-        events (list): The list of events to save.
-    """
+    
+    
+def get_event_from_channel_id(channel_id: str):
     try:
-        with open(EVENTS_FILE_NAME, 'wb') as f:
-            pickle.dump(events, f)
-    except (pickle.PicklingError, OSError) as e:
-        #TODO: dump to text file
-        await log_error(f"Error saving events to disk: {e}")
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
 
-async def load_events_from_disk():
-    """
-    Load a list of events from disk.
+        cursor = connection.cursor()
 
-    Returns:
-        list: The list of events, or an empty list if the file doesn't exist or an error occurred.
-    """
+        # Prepare the SQL query
+        select_query = """
+            SELECT uuid, name, description, start_time, end_time, location, op_id, op_name, original_channel_id, event_id, event_forum_url, event_forum_id, hypeman_used
+            FROM events
+            WHERE event_forum_id = %s
+        """
+
+        # Execute the query to get the event by channel_id
+        cursor.execute(select_query, (channel_id,))
+
+        # Fetch all the matching records
+        rows = cursor.fetchall()
+
+        # Convert rows to list of Event instances
+        events = [Event(*row) for row in rows]
+
+        # Return only the first event
+        return events[0]
+
+    except Error as e:
+        log_error(f"Error: {e}")
+        return None
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+async def approve_event(event: Event):
     try:
-        with open(EVENTS_FILE_NAME, 'rb') as f:
-            return pickle.load(f)
-    except FileNotFoundError:
+        log_info("in approve event")
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
+
+        cursor = connection.cursor()
+
+        # Prepare the SQL query
+        update_query = """
+            UPDATE events
+            SET status = %s, event_id = %s, event_forum_url = %s, event_forum_id =%s
+            WHERE uuid = %s
+        """
+
+        # Execute the query to update the status
+        cursor.execute(update_query, (
+            str(STATUS.APPROVED), str(event.event_id), str(event.event_forum_url), str(event.event_forum_id),
+            str(event.uuid)
+        ))
+
+
+        connection.commit()
+        log_info("Event approved {}".format(event.name))
+
+    except Error as e:
+        print(e)
+        await log_error(f"Error: {e}")
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+async def use_hypeman(id: str):
+    try:
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
+
+        cursor = connection.cursor()
+
+        # Prepare the SQL query
+        update_query = """
+            UPDATE events
+            SET hypeman_used = %s
+            WHERE event_forum_id = %s
+        """
+
+        # Execute the query to update the status
+        cursor.execute(update_query, (
+            str(True),
+            str(id)
+        ))
+
+
+        connection.commit()
+        log_info("Hypeman used {}".format(id))
+
+    except Error as e:
+        await log_error(f"Error: {e}")
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+def update_event_status(id: str, status: STATUS):
+    try:
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
+
+        cursor = connection.cursor()
+
+        # Prepare the SQL query
+        update_query = """
+            UPDATE events
+            SET status = %s
+            WHERE uuid = %s
+        """
+
+        # Execute the query to update the status
+        cursor.execute(update_query, (
+            str(status),
+            id
+        ))
+
+
+        connection.commit()
+        log_info("Event updated successfully! {} to {}".format(id, status))
+
+    except Error as e:
+        log_error(f"Error: {e}")
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            
+def get_events_by_status(status: STATUS) -> List[Event]:
+    try:
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
+
+        cursor = connection.cursor()
+
+        # Prepare the SQL query
+        select_query = """
+            SELECT uuid, name, description, start_time, end_time, location, op_id, op_name, original_channel_id, event_id, event_forum_url, event_forum_id
+            FROM events
+            WHERE status = %s
+        """
+
+        # Execute the query to get the events with the specified status
+        cursor.execute(select_query, (str(status),))
+
+        # Fetch all the matching records
+        rows = cursor.fetchall()
+
+        # Convert rows to list of Event instances
+        events = [Event(*row) for row in rows]
+
+        return events
+
+    except Error as e:
+        log_error(f"Error: {e}")
         return []
-    except (pickle.UnpicklingError, OSError) as e:
-        await log_error(f"Error loading events from disk: {e}")
-        return []
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+async def save_event(event: Event):
+    try:
+        connection = mysql.connector.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=database
+        )
+
+        cursor = connection.cursor()
+
+        # Prepare the SQL query
+        insert_query = """
+            INSERT INTO events (uuid, name, description, start_time, end_time, location, op_id, op_name, original_channel_id, event_id, event_forum_url, event_forum_id, status, hypeman_used)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+
+        # Execute the query with the event data
+        cursor.execute(insert_query, (
+            str(event.uuid), event.name, event.description, event.start_time,
+            event.end_time, event.location, event.op_id, event.op_name,
+            event.original_channel_id, event.event_id, event.event_forum_url,
+            event.event_forum_id, str(STATUS.PENDING), str(False)
+        ))
+
+        connection.commit()
+        log_info("Event saved successfully! {}".format(event.name))
+
+    except Error as e:
+        await log_error(f"Error: {e}")
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
 
 def convert_string_to_dt(dt_string):
     """
@@ -130,33 +338,75 @@ def convert_string_to_dt(dt_string):
         dt_string (str): The date and time string to convert.
 
     Returns:
-        datetime.datetime: The converted datetime object
+        datetime: The converted datetime object
     """
     # Get the current local timezone
-    local_tz = datetime.datetime.now().astimezone().tzinfo
+    local_tz = datetime.now().astimezone().tzinfo
 
     # Convert the string to a "naive" datetime object (without timezone info)
-    naive_dt = datetime.datetime.strptime(dt_string, '%d/%m/%Y %H:%M')
+    naive_dt = datetime.strptime(dt_string, '%d/%m/%Y %H:%M')
 
     # Make the datetime object "aware" by adding the local timezone info
     aware_dt = naive_dt.replace(tzinfo=local_tz)
 
     return aware_dt
 
-@dataclasses.dataclass
-class Event:
-    uuid: str
-    name: str
-    description: str
-    start_time: str
-    end_time: str
-    location: str
-    op_id: int
-    op_name: str
-    original_channel_id: int
-    event_id: str = ""
-    event_forum_url: str = ""
-    event_forum_id: str = ""
+class SlowMode_Approval_Message(discord.ui.View):
+    def __init__(self, channel_id: int):
+        super().__init__()
+        self.channel_id = channel_id
+
+    @discord.ui.button(label="Agree", style=discord.ButtonStyle.green)
+    async def button_callback(self, interaction: discord.Interaction, button):
+        self.stop()
+        await bot.get_channel(self.channel_id).edit(slowmode_delay=30)
+        await bot.get_channel(self.channel_id).send("The channel has been put into slow mode for 30 seconds. Please be mindful of the rules and refrain for engaging in futher arguments")
+
+
+    @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="disagree")
+    async def on_disagree(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            self.stop()
+            await interaction.response.send_message("You've disagreed.", ephemeral=True)
+
+        except Exception as e:
+            # Handle other exceptions
+            log_error(f"An unexpected error occurred: {e}")
+
+class Hypeman_Approval_Message(discord.ui.View):
+    def __init__(self, channel_id: int):
+        super().__init__()
+        self.channel_id = channel_id
+
+    @discord.ui.button(label="Agree", style=discord.ButtonStyle.green)
+    async def button_callback(self, interaction: discord.Interaction, button):
+        log_info("Button clicked")
+        try:
+            self.stop()
+            await use_hypeman(self.channel_id)
+            await interaction.response.send_message("@everyone HYPE MAN IN TOWN LET'S GO!!!!", allowed_mentions=discord.AllowedMentions(everyone=True))
+        except discord.HTTPException as e:
+            # Handle HTTP exceptions that occur due to network problems, Discord server errors, etc.
+            log_error(f"HTTPException occurred: {e}")
+        except discord.Forbidden as e:
+            # Handle exceptions due to forbidden actions, like sending messages in a channel where the bot doesn't have permission
+            log_error(f"Forbidden action: {e}")
+        except discord.NotFound as e:
+            # Handle exceptions for when the channel is not found
+            log_error(f"Channel not found: {e}")
+        except Exception as e:
+            # Handle other exceptions
+            log_error(f"An unexpected error occurred: {e}")
+    
+    @discord.ui.button(label="Disagree", style=discord.ButtonStyle.red, custom_id="disagree")
+    async def on_disagree(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            self.stop()
+            await interaction.response.send_message("You've disagreed.", ephemeral=True)
+
+        except Exception as e:
+            # Handle other exceptions
+            log_error(f"An unexpected error occurred: {e}")
 
 class Event_Approval_Message(discord.ui.View):
     """A view for approving events."""
@@ -178,7 +428,7 @@ class Event_Approval_Message(discord.ui.View):
         Handle the button click to approve an event.
 
         This method edits the interaction message, stops the view, creates a thread for the event,
-        creates a scheduled event, and adds the event to the EVENTS list.
+        creates a scheduled event, and updates the event status to APPROVED.
 
         Args:
             interaction (discord.Interaction): The interaction that triggered the button click.
@@ -213,14 +463,15 @@ class Event_Approval_Message(discord.ui.View):
                 entity_type=discord.EntityType.external,
                 privacy_level=discord.PrivacyLevel.guild_only
             )
-
+            log_info("before assign")
             # Update the event with the scheduled event info
             self.event.event_id = event.id
-
-            # Add the event to the EVENTS list
-            await add_to_events(self.event)
+            log_info("after assign")
+            # Update the status to APPROVED
+            await approve_event(self.event)
         except Exception as e:
             await log_error(f"Error in button_callback: {e}")
+
 
 
     @discord.ui.button(label="Reject", style=discord.ButtonStyle.red, custom_id="reject")
@@ -246,6 +497,8 @@ class Event_Approval_Message(discord.ui.View):
             self.stop()
             
             await bot.get_channel(BOT_CHANNEL_ID).send(f"<@{self.event.op_id}> The event \"{self.event.name}\" was rejected.")
+            # Update the status to REJECTED
+            update_event_status(str(self.event.uuid), STATUS.REJECTED)
         except Exception as e:
             await log_error(f"Error in on_reject: {e}")
 
@@ -272,6 +525,38 @@ async def modsay(ctx, channel: discord.TextChannel = None, *, message = None):
             await ctx.send('Missing parameters. Usage: /modsay #channel "Your message here"', ephemeral=True)
     else:
         await ctx.send("You do not have permission to use this command.", ephemeral=True)
+
+@bot.command()
+async def hypeman(ctx):
+    # Delete the invoking message
+    await ctx.message.delete()
+
+    channel_id = ctx.channel.id
+
+    event = get_event_from_channel_id(channel_id)
+    if event is None:
+        await ctx.send("The hype didn't work. There was an error", ephemeral=True)
+        log_error("More than one event found for channel. I've no idea how this could even happen")
+        return
+    if bool(event.hypeman_used) is True:
+        log_info("Hypeman has already been used")
+        await ctx.send("The hype didn't work. The hype man has been used and is tired", ephemeral=True)
+        return
+    # Get the current time
+    now = datetime.now()
+    # Calculate the time difference
+    time_difference = event.start_time - now
+    if timedelta(hours=0) <= time_difference <= timedelta(hours=72):
+        if event.event_forum_id == str(channel_id):
+            log_info("Hypeman called")
+            await ctx.send(
+                f"You can only call the hypeman once before an event. Are you sure you want to do this now?",
+                view=Hypeman_Approval_Message(channel_id), ephemeral=True
+            )
+            
+    else:
+        log_info("It is not within 72 hours of the event.")
+        await ctx.send("It is not within 72 hours of the event.", ephemeral=True)
 
 @bot.command()
 async def createevent(ctx, name=None, description=None, start_time=None, end_time=None, location=None):
@@ -323,6 +608,8 @@ async def createevent(ctx, name=None, description=None, start_time=None, end_tim
     # Create a new Event object
     event = Event(uuid.uuid4(), name, description, start_time, end_time, location, ctx.author.id, ctx.author.name, ctx.channel.id)
 
+    await save_event(event)
+
     # Send an approval request
     await bot.get_channel(ADMIN_CHANNEL_ID).send(
         f"Event \"{event.name}\" approval request. This event was created by <@{ctx.author.id}>.\nStart time: {event.start_time}\nEnd time: {event.end_time}\nLocation: {event.location}.\nDescription: {event.description}.\n Please approve or reject this event.",
@@ -343,13 +630,47 @@ async def on_scheduled_event_user_add(event, user):
         user (discord.User): The user who was added to the event.
     """
     try:
-        for _event in EVENTS:
+        approved_events = get_events_by_status(STATUS.APPROVED)
+        for _event in approved_events:
             # If the user is not in the event, send a message to the event's forum channel
-            if _event.event_id == event.id:
+            if _event.event_id == str(event.id):
                 await bot.get_channel(_event.event_forum_id).send(f"User <@{user.id}> has joined the event.")
     except Exception as e:
         await log_error(f"Error in on_scheduled_event_user_add: {e}")
 
+
+@bot.command()
+async def report(ctx):
+    try:
+        await ctx.message.delete()
+        message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+    except discord.Forbidden:
+        log_error("The bot could not find permissions to find comment")
+        await ctx.send("The bot does not have the required permissions to delete messages or fetch message history.", ephemeral=True)
+        return
+
+    report = f"The following comment has been reported: {message.content} - <@{message.author.id}>"
+
+    # Check for duplicate reports
+    report_channel = bot.get_channel(MOD_CHANNEL_ID)
+    try:
+        async for old_message in report_channel.history(limit=200):  # Adjust the limit as needed
+            if old_message.content == report:
+                await ctx.send("This has already been reported.", ephemeral=True)
+                return
+    except discord.Forbidden:
+        log_error("The bot could not find permissions to get quote channel")
+        await ctx.send("The bot does not have the required permissions to fetch message history.", ephemeral=True)
+        return
+    try:
+        await bot.get_channel(MOD_CHANNEL_ID).send(
+                "{} , would you like to put the channel into slow mode?".format(report),
+                view=SlowMode_Approval_Message(ctx.channel.id)
+            )
+    except discord.Forbidden:
+        log_error("The bot could not find permissions to post report")
+        await ctx.send("The bot does not have the required permissions to send report.", ephemeral=True)
+        return
 @bot.command()
 async def quotethat(ctx):
     """
@@ -430,9 +751,11 @@ async def mymeetups(ctx):
     # Check each event to see if the user is in the list of users
     user_events = []
     for event in scheduled_events:
-        users = event.users
-        if any(user.id == user_id for user in users):
-            user_events.append(event)
+        async for user in event.users():  # Use async for to iterate over async generator
+            if user.id == user_id:
+                user_events.append(event)
+                break  # Exit the loop early if the user is found
+
 
     if not user_events:
         await ctx.send("You have not joined any meetups.", ephemeral=True)
@@ -449,7 +772,6 @@ async def on_reaction_add(reaction, user):
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name} ({bot.user.id})")
-    EVENTS = await load_events()
     print("Ready!")
 
 # Run the bot with your token
