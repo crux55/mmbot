@@ -4,6 +4,7 @@ import uuid
 import dataclasses
 import discord
 from discord.ext import commands
+from discord import app_commands
 import logging
 from enum import Enum
 from dotenv import load_dotenv
@@ -44,8 +45,15 @@ intents.message_content = True
 intents.guild_scheduled_events = True
 
 # Create the bot
-bot = commands.Bot(command_prefix="/", intents=intents)
+class MMBot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tree = app_commands.CommandTree(self)
 
+    async def setup_hook(self):
+        await self.tree.sync()
+
+bot = MMBot(command_prefix="/", intents=intents)
 
 # Create a logger
 logger = logging.getLogger(__name__)
@@ -502,7 +510,7 @@ class Event_Approval_Message(discord.ui.View):
         except Exception as e:
             await log_error(f"Error in on_reject: {e}")
 
-@bot.command()
+@bot.tree.command(name="modsay", description="Say something on behalf of the mods")
 async def modsay(ctx, channel: discord.TextChannel = None, *, message = None):
     """
     Send a message as the bot to a specific channel.
@@ -526,7 +534,7 @@ async def modsay(ctx, channel: discord.TextChannel = None, *, message = None):
     else:
         await ctx.send("You do not have permission to use this command.", ephemeral=True)
 
-@bot.command()
+@bot.tree.command(name="hypeman", description="Create some hype for an event you created")
 async def hypeman(ctx):
     # Delete the invoking message
     await ctx.message.delete()
@@ -558,7 +566,7 @@ async def hypeman(ctx):
         log_info("It is not within 72 hours of the event.")
         await ctx.send("It is not within 72 hours of the event.", ephemeral=True)
 
-@bot.command()
+@bot.tree.command(name="createevent", description="Create an event")
 async def createevent(ctx, name=None, description=None, start_time=None, end_time=None, location=None):
     """
     Create a new event.
@@ -639,7 +647,7 @@ async def on_scheduled_event_user_add(event, user):
         await log_error(f"Error in on_scheduled_event_user_add: {e}")
 
 
-@bot.command()
+@bot.tree.command(name="report", description="Report something someone said")
 async def report(ctx):
     try:
         await ctx.message.delete()
@@ -671,7 +679,8 @@ async def report(ctx):
         log_error("The bot could not find permissions to post report")
         await ctx.send("The bot does not have the required permissions to send report.", ephemeral=True)
         return
-@bot.command()
+    
+@bot.tree.command(name="quotethat", description="Add something to the qotd channel")
 async def quotethat(ctx):
     """
     Quote a message in the quote channel.
@@ -731,7 +740,7 @@ async def quotethat(ctx):
             await ctx.send("The bot does not have the required permissions to add reactions.", ephemeral=True)
             return
 
-@bot.command()
+@bot.tree.command(name="mymeetups", description="List the meetups the user has joined")
 async def mymeetups(ctx):
     """
     List the meetups the user has joined.
